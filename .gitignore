@@ -1,7 +1,4 @@
 /build/
-/CMakeCache.txt
-/CMakeFiles
-/cmake_*
-/digest.dll
-/digest.dll.a
-/Makefile*
+*.dll
+*.so
+*.o
