@@ -1,3 +1,4 @@
+#include <cstdlib>
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -26,15 +27,17 @@ union Sass_Value* file_not_found(const std::string& file)
 
 union Sass_Value* md5f(const std::string& file, struct Sass_Compiler* comp)
 {
-  std::string path(sass_compiler_find_file(file.c_str(), comp));
-  if (path.empty()) {
+  char *path = sass_compiler_find_file(file.c_str(), comp);
+  if (*path == '\0') {
+    std::free(path);
     return sass_make_error("No filename given");
   }
   else {
     char in[1024];
     MD5 digester;
     std::ifstream fh;
-    fh.open (path.c_str(), std::ios::binary);
+    fh.open(path, std::ios::binary);
+    std::free(path);
     if (fh.fail()) return file_not_found(file);
     while(fh.read(in, sizeof(in))) {
       std::streamsize s = fh.gcount();
@@ -75,15 +78,17 @@ std::string crc32s(const std::string& text, struct Sass_Compiler* comp)
 
 union Sass_Value* crc16f(const std::string& file, struct Sass_Compiler* comp)
 {
-  std::string path(sass_compiler_find_file(file.c_str(), comp));
-  if (path.empty()) {
+  char *path = sass_compiler_find_file(file.c_str(), comp);
+  if (*path == '\0') {
+    std::free(path);
     return sass_make_error("No filename given");
   }
   else {
     char in[1024];
     std::ifstream fh;
     short int crc = 0xFFFF;
-    fh.open (path.c_str(), std::ios::binary);
+    fh.open(path, std::ios::binary);
+    std::free(path);
     if (fh.fail()) return file_not_found(file);
     while(fh.read(in, sizeof(in))) {
       std::streamsize s = fh.gcount();
@@ -104,15 +109,17 @@ union Sass_Value* crc16f(const std::string& file, struct Sass_Compiler* comp)
 
 union Sass_Value* crc32f(const std::string& file, struct Sass_Compiler* comp)
 {
-  std::string path(sass_compiler_find_file(file.c_str(), comp));
-  if (path.empty()) {
+  char *path = sass_compiler_find_file(file.c_str(), comp);
+  if (*path == '\0') {
+    std::free(path);
     return sass_make_error("No filename given");
   }
   else {
     char in[1024];
     std::ifstream fh;
     unsigned long int crc = 0xFFFFFFFF;
-    fh.open (path.c_str(), std::ios::binary);
+    fh.open(path, std::ios::binary);
+    std::free(path);
     if (fh.fail()) return file_not_found(file);
     while(fh.read(in, sizeof(in))) {
       std::streamsize s = fh.gcount();
@@ -153,8 +160,9 @@ std::string base64s(const std::string& text, struct Sass_Compiler* comp)
 
 union Sass_Value* base64f(const std::string& file, struct Sass_Compiler* comp)
 {
-  std::string path(sass_compiler_find_file(file.c_str(), comp));
-  if (path.empty()) {
+  char *path = sass_compiler_find_file(file.c_str(), comp);
+  if (*path == '\0') {
+    std::free(path);
     return sass_make_error("No filename given");
   }
   else {
@@ -163,7 +171,8 @@ union Sass_Value* base64f(const std::string& file, struct Sass_Compiler* comp)
     char out[1368];
     std::ifstream fh;
     base64::encoder enc;
-    fh.open (path.c_str(), std::ios::binary);
+    fh.open(path, std::ios::binary);
+    std::free(path);
     if (fh.fail()) return file_not_found(file);
     std::stringstream ss;
     // read into chunks
