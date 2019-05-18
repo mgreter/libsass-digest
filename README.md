@@ -4,9 +4,9 @@ Native libsass plugin adding (file) digest functions
 
 ## Building
 
-You need to have [libsass] [1] already [compiled] [2] or [installed] [3] as a
+You need to have [libsass][1] already [compiled][2] or [installed][3] as a
 shared library (inclusive header files). It is then compiled via `cmake`. See
-this example to compile it on windows via [MinGW] [4] Compiler Suite:
+this example to compile it on windows via [MinGW][4] Compiler Suite:
 
 ```cmd
 git clone https://github.com/sass/libsass.git
@@ -37,7 +37,7 @@ The following functions are available when you import the digest plugin.
 
 ## Copyright
 
-© 2017 [Marcel Greter] [5]
+ï¿½ 2017 [Marcel Greter][5]
 
 [1]: https://github.com/sass/libsass
 [2]: https://github.com/sass/libsass/wiki/Building-Libsass
