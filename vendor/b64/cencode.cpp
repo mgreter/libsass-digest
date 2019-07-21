@@ -12,9 +12,10 @@ void base64_init_encodestate(base64_encodestate* state_in)
 {
 	state_in->step = step_A;
 	state_in->result = 0;
+	state_in->stepcount = 0;
 }
 
-char base64_encode_value(const char value_in)
+char base64_encode_value(char value_in)
 {
 	static const char* encoding = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 	if (value_in > 63) return '=';
@@ -40,39 +41,44 @@ int base64_encode_block(const char* plaintext_in, int length_in, char* code_out,
 			{
 				state_in->result = result;
 				state_in->step = step_A;
-				return codechar - code_out;
+				return (int)(codechar - code_out);
 			}
 			fragment = *plainchar++;
 			result = (fragment & 0x0fc) >> 2;
 			*codechar++ = base64_encode_value(result);
 			result = (fragment & 0x003) << 4;
+			/* fall through */
+
 	case step_B:
 			if (plainchar == plaintextend)
 			{
 				state_in->result = result;
 				state_in->step = step_B;
-				return codechar - code_out;
+				return (int)(codechar - code_out);
 			}
 			fragment = *plainchar++;
 			result |= (fragment & 0x0f0) >> 4;
 			*codechar++ = base64_encode_value(result);
 			result = (fragment & 0x00f) << 2;
+			/* fall through */
+
 	case step_C:
 			if (plainchar == plaintextend)
 			{
 				state_in->result = result;
 				state_in->step = step_C;
-				return codechar - code_out;
+				return (int)(codechar - code_out);
 			}
 			fragment = *plainchar++;
 			result |= (fragment & 0x0c0) >> 6;
 			*codechar++ = base64_encode_value(result);
 			result  = (fragment & 0x03f) >> 0;
 			*codechar++ = base64_encode_value(result);
+			++(state_in->stepcount);
 		}
 	}
 	/* control should not reach here */
-	return codechar - code_out;
+	return (int)(codechar - code_out);
 }
 
 int base64_encode_blockend(char* code_out, base64_encodestate* state_in)
@@ -95,6 +101,6 @@ int base64_encode_blockend(char* code_out, base64_encodestate* state_in)
 	}
 	*codechar++ = '\0';
 
-	return codechar - code_out;
+	return (int)(codechar - code_out);
 }
 
