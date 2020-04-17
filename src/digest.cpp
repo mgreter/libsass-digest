@@ -11,7 +11,7 @@
 #define BUFFERSIZE 1024
 #include "b64/encode.hpp"
 
-std::string md5s(const std::string& text, struct Sass_Compiler* comp)
+std::string md5s(const std::string& text, struct SassCompiler* comp)
 {
   MD5 digester;
   digester.update(text.c_str(), text.length());
@@ -19,14 +19,14 @@ std::string md5s(const std::string& text, struct Sass_Compiler* comp)
   return digester.hexdigest();
 }
 
-union Sass_Value* file_not_found(const std::string& file)
+struct SassValue* file_not_found(const std::string& file)
 {
   std::string err("File not found: ");
   err += file; // add the filename
   return sass_make_error(err.c_str());
 }
 
-union Sass_Value* md5f(const std::string& file, struct Sass_Compiler* comp)
+struct SassValue* md5f(const std::string& file, struct SassCompiler* comp)
 {
   char *path = sass_compiler_find_file(file.c_str(), comp);
   if (*path == '\0') {
@@ -48,11 +48,11 @@ union Sass_Value* md5f(const std::string& file, struct Sass_Compiler* comp)
     digester.update(in, s);
     digester.finalize();
     std::string rv(digester.hexdigest());
-    return sass_make_string(rv.c_str());
+    return sass_make_string(rv.c_str(), false);
   }
 }
 
-std::string crc16s(const std::string& text, struct Sass_Compiler* comp)
+std::string crc16s(const std::string& text, struct SassCompiler* comp)
 {
   short int crc = 0xFFFF;
   crc = crc16(text.c_str(), text.length(), crc);
@@ -65,7 +65,7 @@ std::string crc16s(const std::string& text, struct Sass_Compiler* comp)
   return ss.str();
 }
 
-std::string crc32s(const std::string& text, struct Sass_Compiler* comp)
+std::string crc32s(const std::string& text, struct SassCompiler* comp)
 {
   unsigned long int crc = 0xFFFFFFFF;
   crc = crc32buf(text.c_str(), text.length(), crc);
@@ -77,7 +77,7 @@ std::string crc32s(const std::string& text, struct Sass_Compiler* comp)
   return ss.str();
 }
 
-union Sass_Value* crc16f(const std::string& file, struct Sass_Compiler* comp)
+struct SassValue* crc16f(const std::string& file, struct SassCompiler* comp)
 {
   char *path = sass_compiler_find_file(file.c_str(), comp);
   if (*path == '\0') {
@@ -104,11 +104,11 @@ union Sass_Value* crc16f(const std::string& file, struct Sass_Compiler* comp)
        << ((crc & 0x00FF) >> 0)
        << ((crc & 0xFF00) >> 8);
     std::string rv(ss.str());
-    return sass_make_string(rv.c_str());
+    return sass_make_string(rv.c_str(), false);
   }
 }
 
-union Sass_Value* crc32f(const std::string& file, struct Sass_Compiler* comp)
+struct SassValue* crc32f(const std::string& file, struct SassCompiler* comp)
 {
   char *path = sass_compiler_find_file(file.c_str(), comp);
   if (*path == '\0') {
@@ -134,11 +134,11 @@ union Sass_Value* crc32f(const std::string& file, struct Sass_Compiler* comp)
        << std::hex
        << (0xFFFFFFFF & crc);
     std::string rv(ss.str());
-    return sass_make_string(rv.c_str());
+    return sass_make_string(rv.c_str(), false);
   }
 }
 
-std::string base64s(const std::string& text, struct Sass_Compiler* comp)
+std::string base64s(const std::string& text, struct SassCompiler* comp)
 {
   int len = 0;
   char out[1368];
@@ -159,7 +159,7 @@ std::string base64s(const std::string& text, struct Sass_Compiler* comp)
   return ss.str();
 }
 
-union Sass_Value* base64f(const std::string& file, struct Sass_Compiler* comp)
+struct SassValue* base64f(const std::string& file, struct SassCompiler* comp)
 {
   char *path = sass_compiler_find_file(file.c_str(), comp);
   if (*path == '\0') {
@@ -192,27 +192,27 @@ union Sass_Value* base64f(const std::string& file, struct Sass_Compiler* comp)
     ss << std::string(out, out + len);
     // return string instance
     std::string rv(ss.str());
-    return sass_make_string(rv.c_str());
+    return sass_make_string(rv.c_str(), false);
   }
 }
 
 // most functions are very simple
 #define IMPLEMENT_STR_FN(fn) \
-union Sass_Value* fn_##fn(const union Sass_Value* s_args, Sass_Function_Entry cb, struct Sass_Compiler* comp) \
+struct SassValue* fn_##fn(struct SassValue* s_args, struct SassCompiler* comp) \
 { \
   if (!sass_value_is_list(s_args)) { \
     return sass_make_error("Invalid arguments for " #fn); \
   } \
-  if (sass_list_get_length(s_args) != 1) { \
+  if (sass_list_get_size(s_args) != 1) { \
     return sass_make_error("Exactly one arguments expected for " #fn); \
   } \
-  const union Sass_Value* inp = sass_list_get_value(s_args, 0); \
+  struct SassValue* inp = sass_list_get_value(s_args, 0); \
   if (!sass_value_is_string(inp)) { \
     return sass_make_error("You must pass a string into " #fn); \
   } \
   const char* inp_str = sass_string_get_value(inp); \
   std::string rv = fn(inp_str, comp); \
-  return sass_make_string(rv.c_str()); \
+  return sass_make_string(rv.c_str(), false); \
 } \
 
 // string digest functions
@@ -223,15 +223,15 @@ IMPLEMENT_STR_FN(base64s)
 
 // most functions are very simple
 #define IMPLEMENT_FILE_FN(fn) \
-union Sass_Value* fn_##fn(const union Sass_Value* s_args, Sass_Function_Entry cb, struct Sass_Compiler* comp) \
+struct SassValue* fn_##fn(struct SassValue* s_args, struct SassCompiler* comp) \
 { \
   if (!sass_value_is_list(s_args)) { \
     return sass_make_error("Invalid arguments for " #fn); \
   } \
-  if (sass_list_get_length(s_args) != 1) { \
+  if (sass_list_get_size(s_args) != 1) { \
     return sass_make_error("Exactly one arguments expected for " #fn); \
   } \
-  const union Sass_Value* inp = sass_list_get_value(s_args, 0); \
+  struct SassValue* inp = sass_list_get_value(s_args, 0); \
   if (!sass_value_is_string(inp)) { \
     return sass_make_error("You must pass a string into " #fn); \
   } \
@@ -251,36 +251,19 @@ extern "C" const char* ADDCALL libsass_get_version() {
 }
 
 // entry point for libsass to request custom functions from plugin
-extern "C" Sass_Function_List ADDCALL libsass_load_functions()
+extern "C" void ADDCALL libsass_init_plugin(struct SassCompiler* compiler)
 {
-
-  // create list of all custom functions
-  Sass_Function_List fn_list = sass_make_function_list(8);
 
   // string digest functions
-  sass_function_set_list_entry(fn_list,  0, sass_make_function("md5($x)", fn_md5s, 0));
-  sass_function_set_list_entry(fn_list,  1, sass_make_function("crc16($x)", fn_crc16s, 0));
-  sass_function_set_list_entry(fn_list,  2, sass_make_function("crc32($x)", fn_crc32s, 0));
-  sass_function_set_list_entry(fn_list,  3, sass_make_function("base64($x)", fn_base64s, 0));
+  sass_compiler_add_custom_function(compiler, sass_make_function("md5($x)", fn_md5s, 0));
+  sass_compiler_add_custom_function(compiler, sass_make_function("crc16($x)", fn_crc16s, 0));
+  sass_compiler_add_custom_function(compiler, sass_make_function("crc32($x)", fn_crc32s, 0));
+  sass_compiler_add_custom_function(compiler, sass_make_function("base64($x)", fn_base64s, 0));
 
   // file digest functions
-  sass_function_set_list_entry(fn_list,  4, sass_make_function("md5f($x)", fn_md5f, 0));
-  sass_function_set_list_entry(fn_list,  5, sass_make_function("crc16f($x)", fn_crc16f, 0));
-  sass_function_set_list_entry(fn_list,  6, sass_make_function("crc32f($x)", fn_crc32f, 0));
-  sass_function_set_list_entry(fn_list,  7, sass_make_function("base64f($x)", fn_base64f, 0));
+  sass_compiler_add_custom_function(compiler, sass_make_function("md5f($x)", fn_md5f, 0));
+  sass_compiler_add_custom_function(compiler, sass_make_function("crc16f($x)", fn_crc16f, 0));
+  sass_compiler_add_custom_function(compiler, sass_make_function("crc32f($x)", fn_crc32f, 0));
+  sass_compiler_add_custom_function(compiler, sass_make_function("base64f($x)", fn_base64f, 0));
 
-  // return the list
-  return fn_list;
-
-}
-
-// entry point for libsass to request custom headers from plugin
-extern "C" Sass_Importer_List ADDCALL libsass_load_headers()
-{
-  // create list of all custom functions
-  Sass_Importer_List imp_list = sass_make_importer_list(1);
-  // put the only function in this plugin to the list
-  sass_importer_set_list_entry(imp_list, 0, 0);
-  // return the list
-  return imp_list;
 }
