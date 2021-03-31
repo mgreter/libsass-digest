@@ -11,7 +11,7 @@
 #define BUFFERSIZE 1024
 #include "b64/encode.hpp"
 
-std::string md5s(const std::string& text, struct SassCompiler* comp)
+std::string md5s(const std::string& text, struct SassCompiler* comp, void*)
 {
   MD5 digester;
   digester.update(text.c_str(), text.length());
@@ -26,7 +26,7 @@ struct SassValue* file_not_found(const std::string& file)
   return sass_make_error(err.c_str());
 }
 
-struct SassValue* md5f(const std::string& file, struct SassCompiler* comp)
+struct SassValue* md5f(const std::string& file, struct SassCompiler* comp, void*)
 {
   char *path = sass_compiler_find_file(file.c_str(), comp);
   if (*path == '\0') {
@@ -52,7 +52,7 @@ struct SassValue* md5f(const std::string& file, struct SassCompiler* comp)
   }
 }
 
-std::string crc16s(const std::string& text, struct SassCompiler* comp)
+std::string crc16s(const std::string& text, struct SassCompiler* comp, void*)
 {
   short int crc = 0xFFFF;
   crc = crc16(text.c_str(), text.length(), crc);
@@ -65,7 +65,7 @@ std::string crc16s(const std::string& text, struct SassCompiler* comp)
   return ss.str();
 }
 
-std::string crc32s(const std::string& text, struct SassCompiler* comp)
+std::string crc32s(const std::string& text, struct SassCompiler* comp, void*)
 {
   unsigned long int crc = 0xFFFFFFFF;
   crc = crc32buf(text.c_str(), text.length(), crc);
@@ -77,7 +77,7 @@ std::string crc32s(const std::string& text, struct SassCompiler* comp)
   return ss.str();
 }
 
-struct SassValue* crc16f(const std::string& file, struct SassCompiler* comp)
+struct SassValue* crc16f(const std::string& file, struct SassCompiler* comp, void*)
 {
   char *path = sass_compiler_find_file(file.c_str(), comp);
   if (*path == '\0') {
@@ -108,7 +108,7 @@ struct SassValue* crc16f(const std::string& file, struct SassCompiler* comp)
   }
 }
 
-struct SassValue* crc32f(const std::string& file, struct SassCompiler* comp)
+struct SassValue* crc32f(const std::string& file, struct SassCompiler* comp, void*)
 {
   char *path = sass_compiler_find_file(file.c_str(), comp);
   if (*path == '\0') {
@@ -138,7 +138,7 @@ struct SassValue* crc32f(const std::string& file, struct SassCompiler* comp)
   }
 }
 
-std::string base64s(const std::string& text, struct SassCompiler* comp)
+std::string base64s(const std::string& text, struct SassCompiler* comp, void*)
 {
   int len = 0;
   char out[1368];
@@ -159,7 +159,7 @@ std::string base64s(const std::string& text, struct SassCompiler* comp)
   return ss.str();
 }
 
-struct SassValue* base64f(const std::string& file, struct SassCompiler* comp)
+struct SassValue* base64f(const std::string& file, struct SassCompiler* comp, void*)
 {
   char *path = sass_compiler_find_file(file.c_str(), comp);
   if (*path == '\0') {
@@ -198,7 +198,7 @@ struct SassValue* base64f(const std::string& file, struct SassCompiler* comp)
 
 // most functions are very simple
 #define IMPLEMENT_STR_FN(fn) \
-struct SassValue* fn_##fn(struct SassValue* s_args, struct SassCompiler* comp) \
+struct SassValue* fn_##fn(struct SassValue* s_args, struct SassCompiler* comp, void* cookie) \
 { \
   if (!sass_value_is_list(s_args)) { \
     return sass_make_error("Invalid arguments for " #fn); \
@@ -211,7 +211,7 @@ struct SassValue* fn_##fn(struct SassValue* s_args, struct SassCompiler* comp) \
     return sass_make_error("You must pass a string into " #fn); \
   } \
   const char* inp_str = sass_string_get_value(inp); \
-  std::string rv = fn(inp_str, comp); \
+  std::string rv = fn(inp_str, comp, cookie); \
   return sass_make_string(rv.c_str(), false); \
 } \
 
@@ -223,7 +223,7 @@ IMPLEMENT_STR_FN(base64s)
 
 // most functions are very simple
 #define IMPLEMENT_FILE_FN(fn) \
-struct SassValue* fn_##fn(struct SassValue* s_args, struct SassCompiler* comp) \
+struct SassValue* fn_##fn(struct SassValue* s_args, struct SassCompiler* comp, void* cookie) \
 { \
   if (!sass_value_is_list(s_args)) { \
     return sass_make_error("Invalid arguments for " #fn); \
@@ -236,7 +236,7 @@ struct SassValue* fn_##fn(struct SassValue* s_args, struct SassCompiler* comp) \
     return sass_make_error("You must pass a string into " #fn); \
   } \
   const char* inp_str = sass_string_get_value(inp); \
-  return fn(inp_str, comp); \
+  return fn(inp_str, comp, cookie); \
 } \
 
 // file digest functions
